@@ -2,21 +2,23 @@ const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const Auth = require("../models/auth");
 
+const callbackURL = process.env.BACKEND_URL
+    ? `${process.env.BACKEND_URL}/api/auth/google/callback`
+    : "/api/auth/google/callback";
+
 passport.use(new GoogleStrategy({
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: "/api/auth/google/callback"
+        callbackURL: callbackURL
     },
     async (accessToken, refreshToken, profile, done) => {
         try {
-            // Buscar si el usuario ya existe
             let user = await Auth.findOne({email: profile.emails[0].value});
 
             if (user) {
                 return done(null, user);
             }
 
-            // Si no existe, crear nuevo usuario
             user = new Auth({
                 nombre: profile.name.givenName || "Usuario",
                 apellido: profile.name.familyName || "Google",
